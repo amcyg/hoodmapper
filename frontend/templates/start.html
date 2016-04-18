@@ -1,0 +1,236 @@
+{% extends "layout.html" %}
+{% block head %}
+<style>
+    h2 {
+        text-align: center;
+}
+    select {
+   width: 300px;
+   padding: 5px;
+   font-size: 20px;
+   line-height: 2;
+   border: 0;
+   border-radius: 0;
+   height: 50px;
+    }
+
+
+    #step1 {
+      text-align: center;
+    }
+
+    #step2 {
+        display: none;
+    }
+    #sanfran {
+      display: none;
+      text-align: center;
+      height: 600px;
+    }
+
+    #seattle {
+      display: none;
+      text-align: center;
+      height: 600px;
+    }
+
+    path {
+      stroke-width: 1px;
+      stroke: white;
+      fill: steelblue;
+      cursor: pointer;
+    }
+
+    path:hover, path.highlighted {
+      fill: tomato;
+    }
+
+    div.tooltip {
+      position: absolute;
+      background-color: white;
+      border: 1px solid black;
+      color: black;
+      font-weight: bold;
+      padding: 4px 8px;
+      display: none;
+    }
+</style>
+<script src="https://d3js.org/d3.v3.min.js"></script>
+
+<script>
+    $(function() {
+        $("select[name=city]").on("change", function() {
+        var chosen_city = $("select[name=city]").val();
+        console.log(chosen_city);
+        $("#step1").hide();
+        if (chosen_city == "San Francisco") {
+          $("#sanfran").show();
+        } else if (chosen_city == "Seattle") {
+          // console.log('LOL')
+          $("#seattle").show();
+        }
+        $("#step2").show();
+        });
+    });
+</script>
+{% endblock %}
+
+{% block body %}
+<form method="GET" action="/recommend">
+
+<div id="step1">
+<h2>I am a:</h2>
+<select name="vocation" style="text-indent: 12px;">
+    <option>Choose your profession...</option>
+    <option>Software Engineer</option>
+    <option>Data Scientist</option>
+    <option>Other</option>
+</select>
+
+<h2>Living in:</h2>
+<select name="city" style="text-indent: 50px;">
+    <option>Choose your city...</option>
+    <option>San Francisco</option>
+    <option>Seattle</option>
+</select>
+</div>
+
+<div id="step2">
+    <h2>Choose your neighborhood:</h2>
+    <div id="sanfran">
+    </div>
+    <div id="seattle">
+    </div>
+
+    <input type="hidden" name="neighborhood" value="Yerba Buena">
+</div>
+
+</form>
+
+<script>
+// === Seattle ===
+
+//Map dimensions (in pixels)
+var width = 339,
+    height = 600;
+
+//Map projection
+var projection = d3.geo.mercator()
+    .scale(92249.5079833803)
+    .center([-122.336000176102,47.61497543359545]) //projection center
+    .translate([width/2,height/2]) //translate to center the map in view
+
+//Generate paths based on projection
+var path = d3.geo.path()
+    .projection(projection);
+
+//Create an SVG
+var svg = d3.select("#seattle").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+//Group for the map features
+var features = svg.append("g")
+    .attr("class","features");
+
+//Create a tooltip, hidden at the start
+var tooltip = d3.select("body").append("div").attr("class","tooltip");
+
+//Keeps track of currently zoomed feature
+var centered;
+
+d3.json("static/sea_neighborhoods_updated.geojson",function(error,geodata) {
+  if (error) return console.log(error); //unknown error, check the console
+
+  //Create a path for each map feature in the data
+  features.selectAll("path")
+    .data(geodata.features)
+    .enter()
+    .append("path")
+    .attr("d",path)
+    .on("mouseover",showTooltip)
+    .on("mousemove",moveTooltip)
+    .on("mouseout",hideTooltip)
+    .on("click",clickedSea);
+
+});
+
+function clickedSea(d,i) {
+  $('input[name=neighborhood]').val(d['properties']['S_HOOD']);
+  $('form').submit();
+}
+
+// === BEGIN SF ==
+// //Create an SVG
+
+//Map projection
+var projectionSf = d3.geo.mercator()
+    .scale(206723.46198770017)
+    .center([-122.43595705948374,37.75984975884893]) //projection center
+    .translate([600/2,497/2]) //translate to center the map in view
+
+var pathSf = d3.geo.path()
+    .projection(projectionSf);
+
+var svgSf = d3.select("#sanfran").append("svg")
+    .attr("width", 600)
+    .attr("height", 497);
+
+//Group for the map features
+var featuresSf = svgSf.append("g")
+    .attr("class","features");
+
+d3.json("static/sf_neighborhoods_updated.geojson",function(error,geodataSf) {
+  if (error) return console.log(error); //unknown error, check the console
+
+  //Create a path for each map feature in the data
+  featuresSf.selectAll("path")
+    .data(geodataSf.features)
+    .enter()
+    .append("path")
+    .attr("d",pathSf)
+    .on("mouseover",showTooltipSf)
+    .on("mousemove",moveTooltip)
+    .on("mouseout",hideTooltip)
+    .on("click",clickedSf);
+
+});
+function clickedSf(d,i) {
+  $('input[name=neighborhood]').val(d['properties']['nbrhood']);
+  $('form').submit();
+}
+
+// === END SF ===
+
+
+//Position of the tooltip relative to the cursor
+var tooltipOffset = {x: 5, y: -25};
+
+//Create a tooltip, hidden at the start
+function showTooltip(d) {
+  moveTooltip();
+
+  tooltip.style("display","block")
+      .text(d.properties.S_HOOD);
+}
+
+//Create a tooltip, hidden at the start
+function showTooltipSf(d) {
+  moveTooltip();
+
+  tooltip.style("display","block")
+      .text(d.properties.nbrhood);
+}
+
+//Move the tooltip to track the mouse
+function moveTooltip() {
+  tooltip.style("top",(d3.event.pageY+tooltipOffset.y)+"px")
+      .style("left",(d3.event.pageX+tooltipOffset.x)+"px");
+}
+
+//Create a tooltip, hidden at the start
+function hideTooltip() {
+  tooltip.style("display","none");
+}
+</script>
+{% endblock %}

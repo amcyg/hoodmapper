@@ -1,0 +1,5 @@
+eventbrite
+pyshp
+scrapy
+Flask
+googlemaps

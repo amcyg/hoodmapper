@@ -1,0 +1,267 @@
+{% extends "layout.html" %}
+{% block head %}
+<style>
+
+body {
+  font: 12px sans-serif;
+  text-align: center;
+}
+
+path {
+  stroke-width: 1px;
+  stroke: white;
+  fill: #999;
+  cursor: pointer;
+}
+
+path.q0-7 {
+  fill: #edf8e9;
+}
+
+path.q1-7 {
+  fill: #c7e9c0;
+}
+
+path.q2-7 {
+  fill: #a1d99b;
+}
+
+path.q3-7 {
+  fill: #74c476;
+}
+
+path.q4-7 {
+  fill: #41ab5d;
+}
+
+path.q5-7 {
+  fill: #238b45;
+}
+
+path.q6-7 {
+  fill: #005a32;
+}
+
+div.tooltip {
+  position: absolute;
+  background-color: white;
+  border: 1px solid black;
+  color: black;
+  font-weight: bold;
+  padding: 4px 8px;
+  display: none;
+
+
+}
+
+    h2 {
+        text-align: center;
+}
+    select {
+   width: 300px;
+   padding: 5px;
+   font-size: 20px;
+   line-height: 2;
+   border: 0;
+   border-radius: 0;
+   height: 50px;
+    }
+    form {
+      text-align: center;
+    }
+
+</style>
+{% endblock %}
+{% block body %}
+<h2>Factor:</h2>
+<form>
+  <select>
+    <option>Tree Density</option>
+    <option>Transit Score</option>
+    <option>Walk Score</option>
+    <option>Assault Density</option>
+    <option>Burglary Density</option>
+  </select>
+</form>
+
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var FACTORS = {
+  'Tree Density': {
+    color: d3.scale.quantize()
+        .domain([1.08577800757,127.66994841])
+        .range(d3.range(7).map(function(i) { return "q" + i + "-7"; })),
+    property: 'tree_density'
+  },
+  'Assault Density': {
+    color: d3.scale.quantize()
+        .domain([0,282.683628724])
+        .range(d3.range(7).map(function(i) { return "q" + i + "-7"; })),
+    property: 'assault_density'
+  },
+  'Burglary Density': {
+    color: d3.scale.quantize()
+        .domain([0,211.110825415])
+        .range(d3.range(7).map(function(i) { return "q" + i + "-7"; })),
+    property: 'burglary_density'
+  },
+  'Transit Score': {
+    color: d3.scale.quantize()
+        .domain([39,100])
+        .range(d3.range(7).map(function(i) { return "q" + i + "-7"; })),
+    property: 'transit_score',
+  },
+  'Walk Score': {
+    color: d3.scale.quantize()
+        .domain([7,99])
+        .range(d3.range(7).map(function(i) { return "q" + i + "-7"; })),
+    property: 'transit_score'
+  }
+}
+//Create a tooltip, hidden at the start
+var tooltip = d3.select("body").append("div").attr("class","tooltip");
+
+
+// Zoom to feature on click
+function clicked(d,i) {
+}
+
+function render(factor) {
+  $('svg').remove();
+  // === BEGIN Seattle ===
+  //Map dimensions (in pixels)
+  var width = 339,
+      height = 600;
+
+  //Map projection
+  var projection = d3.geo.conicEqualArea()
+      .scale(136849.76592319107)
+      .center([-122.32909110884893,47.56665662821191]) //projection center
+      .parallels([47.49551362397606,47.73416494684497]) //parallels for conic projection
+      .rotate([122.32909110884893]) //rotation for conic projection
+      .translate([-124828.30578754994,-125372.15698341]) //translate to center the map in view
+
+  //Generate paths based on projection
+  var path = d3.geo.path()
+      .projection(projection);
+
+  //Create an SVG
+  var svg = d3.select("body").append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+  //Group for the map features
+  var features = svg.append("g")
+      .attr("class","features");
+
+
+  //Keeps track of currently zoomed feature
+  var centered;
+
+  d3.json("static/sea_neighborhoods_updated.geojson",function(error,geodata) {
+    if (error) return console.log(error); //unknown error, check the console
+
+    //Create a path for each map feature in the data
+    features.selectAll("path")
+      .data(geodata.features)
+      .enter()
+      .append("path")
+      .attr("d",path)
+      .attr("class", function(d) { return (typeof FACTORS[factor].color(d.properties[FACTORS[factor].property]) == "string" ? FACTORS[factor].color(d.properties[FACTORS[factor].property]) : ""); })
+      .on("mouseover",showTooltip)
+      .on("mousemove",moveTooltip)
+      .on("mouseout",hideTooltip)
+      .on("click",clicked);
+
+  });
+
+  // === END Seattle ===
+
+  // === BEGIN SF ===
+  // //Map dimensions (in pixels)
+  var width = 600,
+      height = 497;
+
+  // //Map projection
+  var projection = d3.geo.conicEqualArea()
+      .scale(261222.26816318775)
+      .center([-122.56917678541008,37.59953660677954]) //projection center
+      .parallels([37.70808933741858,37.81157398741448]) //parallels for conic projection
+      .rotate([122.56917678541008]) //rotation for conic projection
+      .translate([-326732.9384594125,-249844.74487722875]) //translate to center the map in view
+
+  //Generate paths based on projection
+  var pathSf = d3.geo.path()
+      .projection(projection);
+
+  // //Create an SVG
+  var svgSf = d3.select("body").append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+  //Group for the map features
+  var featuresSf = svgSf.append("g")
+      .attr("class","features");
+
+  d3.json("static/sf_neighborhoods_updated.geojson",function(error,geodata) {
+    if (error) return console.log(error); //unknown error, check the console
+
+    //Create a path for each map feature in the data
+    featuresSf.selectAll("path")
+      .data(geodata.features)
+      .enter()
+      .append("path")
+      .attr("d",pathSf)
+      .attr("class", function(d) { return (typeof FACTORS[factor].color(d.properties[FACTORS[factor].property]) == "string" ? FACTORS[factor].color(d.properties[FACTORS[factor].property]) : ""); })
+      .on("mouseover",showTooltipSf)
+      .on("mousemove",moveTooltip)
+      .on("mouseout",hideTooltip)
+      .on("click",clicked);
+
+  });
+
+
+  // === END SF ===
+
+}
+$(function() {
+  $('select').on('change', function() {
+    render($(this).val());
+  });
+  render("Tree Density");
+});
+
+
+//Position of the tooltip relative to the cursor
+var tooltipOffset = {x: 5, y: -25};
+
+//Create a tooltip, hidden at the start
+function showTooltip(d) {
+  moveTooltip();
+
+  tooltip.style("display","block")
+      .text(d.properties.S_HOOD);
+}
+
+//Create a tooltip, hidden at the start
+function showTooltipSf(d) {
+  moveTooltip();
+
+  tooltip.style("display","block")
+      .text(d.properties.nbrhood);
+}
+
+
+//Move the tooltip to track the mouse
+function moveTooltip() {
+  tooltip.style("top",(d3.event.pageY+tooltipOffset.y)+"px")
+      .style("left",(d3.event.pageX+tooltipOffset.x)+"px");
+}
+
+//Create a tooltip, hidden at the start
+function hideTooltip() {
+  tooltip.style("display","none");
+}
+</script>
+{% endblock %}

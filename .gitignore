@@ -1,0 +1,8 @@
+data
+.ipynb_checkpoints/
+keys.py
+*.pyc
+.*.touch
+.DS_Store
+downloads
+Presentation

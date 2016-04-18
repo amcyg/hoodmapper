@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+  h1, h2 {
+    text-align: center;
+
+<<<<<<< HEAD
+    #neighborhood-selector {
+        border: 1px solid blue;
+        height: 300px;
+        overflow: scroll;:
+    }
+
+    .neighborhood-thumbnail {
+        border: 1px solid black;
+        margin: 5px;
+        padding: 4px;
+        height: 2em;
+        text-align: center;
+        cursor: pointer;
+    }
+</style>
+<script>
+  // just in case we need it
+  window.recommendations = {{ recommendations_json|safe }};
+
+  function select_neighborhood() {
+  var selected_neighborhood_name = $(this).find('.name').text();
+  $('#neighborhood-details .name').text(selected_neighborhood_name);
+=======
+>>>>>>> 2d88b86... checkpoint
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>If you like {{ original_hood }}, then you might like...</h1>
+<<<<<<< HEAD
+<div id="neighborhood-details" class="col-md-9">
+    <h2 class="name"></h2>
+</div>
+<div id="neighborhood-selector" class="col-md-3">
+    {% for hood in recommendations %}
+    <div class="neighborhood-thumbnail">
+        <span class="name">{{ hood[0] }}</span>
+    </div>
+    {% endfor %}
+</div>
+=======
+
+<ul>
+  {% for hood in recommendations %}
+    <h2>{{ hood[0] }} </h2>
+  {% endfor %}
+</ul>
+>>>>>>> 2d88b86... checkpoint
+
+
+{% endblock %}
